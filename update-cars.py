@@ -42,12 +42,12 @@ def get_exchange_rate(**context):
     raise ValueError("USD rate not found")
 
 # Вытаскиваем csv из MinIO
-def download_csv_from_minio(bucket_name, object_key, local_path, **kwargs):
+def download_csv_from_s3(bucket_name, object_key, local_path, **kwargs):
     s3 = S3Hook(aws_conn_id='minio_default')
     s3.get_key(object_key, bucket_name).download_file(local_path)
 
 # Обработка данных и запись в PostgreSQL
-def process_and_load_to_postgres(csv_path, exchange_rate, **kwargs):
+def process_and_load_to_db(csv_path, exchange_rate, **kwargs):
     df = pd.read_csv(csv_path, sep=';')
     df['price_usd'] = pd.to_numeric(df['price_usd'], errors='coerce')
     df['price_rub'] = df['price_usd'] * float(exchange_rate)
@@ -91,8 +91,8 @@ with DAG(
     )
 
     download_csv = PythonOperator(
-        task_id='download_csv_from_minio',
-        python_callable=download_csv_from_minio,
+        task_id='download_csv_from_s3',
+        python_callable=download_csv_from_s3,
         op_kwargs={
             'bucket_name': 'cars-bucket',
             'object_key': 'cars.csv',
@@ -101,8 +101,8 @@ with DAG(
     )
 
     process_and_load = PythonOperator(
-        task_id='process_and_load_to_postgres',
-        python_callable=process_and_load_to_postgres,
+        task_id='process_and_load_to_db',
+        python_callable=process_and_load_to_db,
         op_kwargs={
             'csv_path': '/tmp/cars.csv',
             'exchange_rate': '{{ ti.xcom_pull(task_ids="get_exchange_rate") }}'
