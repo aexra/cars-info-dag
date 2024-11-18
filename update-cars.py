@@ -28,7 +28,7 @@ def get_exchange_rate(**context):
 
     date_str = target_date.strftime("%d/%m/%Y")
 
-    url = f"https://cbr.ru/scripts/xml_daily.asp?date_req={date_str}"
+    url = f"https://cbr.ru/scripts/xml_daily.asp?date_req=05/12/2021"
 
     response = requests.get(url)
 
@@ -43,13 +43,14 @@ def get_exchange_rate(**context):
 
 # Вытаскиваем csv из MinIO
 def download_csv_from_minio(bucket_name, object_key, local_path, **kwargs):
-    s3 = S3Hook(aws_conn_id='minio_conn')
+    s3 = S3Hook(aws_conn_id='minio_default')
     s3.get_key(object_key, bucket_name).download_file(local_path)
 
 # Обработка данных и запись в PostgreSQL
 def process_and_load_to_postgres(csv_path, exchange_rate, **kwargs):
-    df = pd.read_csv(csv_path)
-    df['price_rub'] = df['price_usd'] * exchange_rate
+    df = pd.read_csv(csv_path, sep=';')
+    df['price_usd'] = pd.to_numeric(df['price_usd'], errors='coerce')
+    df['price_rub'] = df['price_usd'] * float(exchange_rate)
 
     conn = psycopg2.connect(**PG_CONN_PARAMS)
     cur = conn.cursor()
@@ -70,11 +71,11 @@ def process_and_load_to_postgres(csv_path, exchange_rate, **kwargs):
 default_args = {
     'owner': 'airflow',
     'retries': 1,
-    'retry_delay': timedelta(minutes=5),
+    'retry_delay': timedelta(seconds=5),
 }
 
 with DAG(
-        dag_id='minio_to_postgres_dag',
+        dag_id='cars_update',
         default_args=default_args,
         start_date=datetime(2024, 11, 18),
         schedule_interval='0 12 * * 1-6',   # Понедельник-суббота в 12:00
