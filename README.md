@@ -49,7 +49,7 @@ def get_exchange_rate(**context):
 
     date_str = target_date.strftime("%d/%m/%Y")
 
-    url = f"https://cbr.ru/scripts/xml_daily.asp?date_req=05/12/2021"
+    url = f"https://cbr.ru/scripts/xml_daily.asp?date_req={date_str}"
 
     response = requests.get(url)
 
@@ -177,6 +177,19 @@ Lada;Vesta;1.8;2021;950000
 > Так сказать, нюанс...
 
 В качестве БД для этого проекта был использован сервер PostgreSQL 17, в связи с невозможностью получить Greenplum с [официального сайта](https://greenplum.org/) (кнопка Downloads оттуда пропала вроде в прошлом году)
+
+В базе создана всего одна [таблица](./SQL/CREATE_CARS_TABLE.sql), которая и будет содержать актуальные авто с их стоимостями:
+
+```sql
+CREATE TABLE IF NOT EXISTS Cars (
+	car_id SERIAL PRIMARY KEY,
+	brand VARCHAR(100) NOT NULL DEFAULT 'DEFAULT_MARK',
+	model VARCHAR(100) NOT NULL DEFAULT 'DEFAULT_MODEL',
+	engine_capacity FLOAT NOT NULL DEFAULT 0,
+	prod_year VARCHAR(4) NOT NULL DEFAULT '1990',
+	price MONEY NOT NULL DEFAULT 0
+);
+```
 
 ### Результат
 
