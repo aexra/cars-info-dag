@@ -28,7 +28,7 @@ def get_exchange_rate(**context):
 
     date_str = target_date.strftime("%d/%m/%Y")
 
-    url = f"https://cbr.ru/scripts/xml_daily.asp?date_req=05/12/2021"
+    url = f"https://cbr.ru/scripts/xml_daily.asp?date_req={date_str}"
 
     response = requests.get(url)
 
