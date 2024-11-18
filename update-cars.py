@@ -7,7 +7,7 @@ import xml.etree.ElementTree as ET
 import pandas as pd
 import psycopg2
 
-# Параметры для подключения Postgres
+# Параметры для подключения БД
 PG_CONN_PARAMS = {
     "dbname": "postgres",
     "user": "postgres",
@@ -46,7 +46,7 @@ def download_csv_from_s3(bucket_name, object_key, local_path, **kwargs):
     s3 = S3Hook(aws_conn_id='minio_default')
     s3.get_key(object_key, bucket_name).download_file(local_path)
 
-# Обработка данных и запись в PostgreSQL
+# Обработка данных и запись в БД
 def process_and_load_to_db(csv_path, exchange_rate, **kwargs):
     df = pd.read_csv(csv_path, sep=';')
     df['price_usd'] = pd.to_numeric(df['price_usd'], errors='coerce')
