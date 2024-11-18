@@ -55,11 +55,13 @@ def process_and_load_to_postgres(csv_path, exchange_rate, **kwargs):
     conn = psycopg2.connect(**PG_CONN_PARAMS)
     cur = conn.cursor()
 
+    cur.execute('TRUNCATE TABLE cars;')
+
     for _, row in df.iterrows():
         cur.execute(
             """
-            INSERT INTO Cars (brand, model, engine_capacity, prod_year, price)
-            VALUES (%s, %s, %s, %s, %s)
+            INSERT INTO cars (brand, model, engine_capacity, prod_year, price)
+            VALUES (%s, %s, %s, %s, %s);
             """,
             (row['brand'], row['model'], row['engine_capacity'], row['prod_year'], row['price_rub'])
         )
